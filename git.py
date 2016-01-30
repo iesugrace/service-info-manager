@@ -59,7 +59,7 @@ class Git:
         path, for a changing commit, it may be two.
         """
         paths = []
-        cmd   = ['git', 'log', '--grep=Add log', '--grep=Change log',
+        cmd   = ['git', 'log', '--grep=Add record', '--grep=Change record',
                     '-%s' % count, '--pretty=format:', '--name-only']
         stat, stdout, stderr = self.runCmd(cmd, quiet=True)
         if stat:
