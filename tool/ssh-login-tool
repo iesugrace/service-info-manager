@@ -1,0 +1,44 @@
+#!/bin/bash
+# Author: Joshua Chen
+# Date: 2016-01-30
+# Location: Shenzhen
+# Desc: Fetch the information from the
+# service manager, and try to login.
+
+login() {
+    text=$(svman list -S "$1")
+    count=$(grep -c service <<< "$text")
+    if test "$count" -eq 0; then
+        echo "no match" >&2
+        exit
+    elif test "$count" -ne 1; then
+        prompt=$(echo "$text" | grep -e service -e Desc -e Host -e Protocol -e Port \
+                    sed '/^Port/a\\')
+        echo "multiple match:"
+        echo "$prompt"
+        exit
+    fi
+    protocol=$(echo "$text" | sed -n -r '/^Protocol:/s/^Protocol: *//p')
+    if test "$protocol" != "ssh"; then
+        echo "protocol $protocol not supported" >&2
+        exit
+    fi
+    host=$(echo "$text" | sed -n -r '/^Host:/s/^Host: *//p')
+    port=$(echo "$text" | sed -n -r '/^Port:/s/^Port: *//p')
+    user=$(echo "$text" | sed -n -r '/^User:/s/^User: *//p')
+    password=$(echo "$text" | sed -n -r '/^Password:/s/^Password: *//p')
+
+    # login
+    r shell -h "$host" -P "$port" -u "$user" -p "$password"
+}
+
+help() {
+    echo "Usage: $(basename $0) keyword"
+}
+
+if test $# -ne 1; then
+    help >&2
+    exit 1
+fi
+
+login "$1"
