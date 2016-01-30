@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # Author: Joshua Chen
-# Date: 2016-01-03
+# Date: 2016-01-30
 # Location: Shenzhen
-# Description: a log tool with encrypted remote backup.
+# Description: a tool for managing IT service
+# information, it is based on log-with-git.
 
 import sys, os
 import re
@@ -195,16 +196,16 @@ class App:
 
 
     def add(self, args):
-        """ Add a log
+        """ Add a record
         If message provided, all lines before an empty line
-        will serve as the subject, and the rest as the data.
-        If the data is not available from the argument, read
-        it from the stdin if the stdin is not a tty. If the
-        -m option is not provided, or its argument is empty,
-        enter interactive mode and open up an editor to
-        collect the subject and optionally the data.
+        will serve as the desc, and the rest as the comment.
+        If the comment is not available from the argument,
+        read it from the stdin if the stdin is not a tty. If
+        the -m option is not provided, or its argument is
+        empty, enter interactive mode and open up an editor
+        to collect the desc and optionally the comment.
 
-        Priority of the source of subject and data, descending:
+        Priority of the source of desc and comment, descending:
 
             cmdline arguments --> stdin --> editor
 
@@ -213,53 +214,56 @@ class App:
             help('add')
             exit(0)
 
-        tag = _time = scene = people = message = subject = ''
-        data = b''
-        binary = False
+        _time = host = protocol = port = user = password = message = desc = ''
+        comment = b''
         while len(args) >= 2:
             key = args.pop(0)
-            if key == '-g':
-                tag = args.pop(0)
-            elif key == '-t':
+            if key == '-t':
                 _time = args.pop(0)
-            elif key == '-c':
-                scene = args.pop(0)
+            elif key == '-h':
+                host = args.pop(0)
+            elif key == '-l':
+                protocol = args.pop(0)
             elif key == '-p':
-                people = args.pop(0)
+                port = args.pop(0)
+            elif key == '-u':
+                user = args.pop(0)
+            elif key == '-w':
+                password = args.pop(0)
             elif key == '-m':
                 message  = args.pop(0)
-        # subject and data from command line
+        # desc and comment from command line
         if message:
             msgLines = message.rstrip('\n').split('\n\n')
-            subject  = msgLines.pop(0)
-            data     = '\n\n'.join(msgLines).encode()
+            desc     = msgLines.pop(0)
+            comment  = '\n\n'.join(msgLines).encode()
 
-        interactive = not subject
+        interactive = not desc
         if interactive and not os.isatty(sys.stdin.fileno()):
             msg = "no -m option, assume interactive mode, but stdin is not a terminal"
             raise applib.NotTerminalException(msg)
 
-        # data from stdin
-        if not data and not os.isatty(sys.stdin.fileno()):
+        # comment from stdin
+        if not comment and not os.isatty(sys.stdin.fileno()):
             stdin = os.fdopen(sys.stdin.fileno(), 'rb')
             iData = stdin.read()
             if applib.isBinary(iData):
-                binary = True
-                data   = applib.binToAsc(iData)
+                msg = "Binary data is not supported"
+                raise applib.NotSupportedException(msg)
             else:
-                binary = False
-                data   = iData
-        if not binary:
-            data = data.decode()
+                comment   = iData
+        comment = comment.decode()
         if not _time:
             _time = isodatetime()
         logger = Log(self.configs)
-        logger.add(subject=subject, time=_time, scene=scene, people=people,
-                   tag=tag, data=data, binary=binary, interactive=interactive)
+        logger.add(desc=desc, time=_time, host=host,
+                protocol=protocol, port=port, user=user,
+                password=password, comment=comment,
+                interactive=interactive)
 
 
     def _list(self, args):
-        """ List log summary
+        """ List log
 
         Match log entries by time, and/or regular expression.
 
@@ -324,11 +328,8 @@ class App:
                 x = [True for t1, t2 in timePoints if t1 <= t <= t2]
                 timeMatch = bool(x)
             if regexps:
-                g = [record.author, record.subject, record.scene,
-                     record.people, record.tag]
-                if not record.binary:
-                    g.append(record.data)
-
+                g = [record.author, record.desc, record.host, record.protocol,
+                     record.port, record.user, record.password, record.commend]
                 if matchAll:
                     matcher = lambda ps, f: len([1 for p in ps if re.search(p, f)]) == len(ps)
                 else:
@@ -351,7 +352,7 @@ def help(cate=None, ofile=sys.stdout):
 %s add -m message
 %s add -m message < file
 pipe | %s add -m message
-%s add -g tag -t time -c scene -p people -m message""" % ((bname,) * 5)
+%s add -t time -h host -l protocol -p port -u user -w password -m message""" % ((bname,) * 5)
 
     listMsg = """%s list                             -- list all
 %s list -3                          -- the last three added/changed
@@ -375,7 +376,7 @@ pipe | %s add -m message
 %s del -f 297aacc               -- delete without confirmation
 %s del -i list-of-file          -- get log IDs from a file""" % ((bname,) * 4)
 
-    editMsg = "%s edit <log-id>" % bname
+    editMsg = "%s edit <record-id>" % bname
 
     pushMsg = """%s push origin                  -- push to remote 'origin'
 %s push origin github           -- push to remote 'origin' and 'github'

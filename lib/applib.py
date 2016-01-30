@@ -6,6 +6,7 @@ import base64
 class InvalidTimeException(Exception): pass
 class InvalidCmdException(Exception): pass
 class NotTerminalException(Exception): pass
+class NotSupportedException(Exception): pass
 
 def get_status_byte_output(cmd):
     """ Run the cmd, return the stdout and stderr as
