@@ -329,7 +329,7 @@ class App:
                 timeMatch = bool(x)
             if regexps:
                 g = [record.author, record.desc, record.host, record.protocol,
-                     record.port, record.user, record.password, record.commend]
+                     record.port, record.user, record.password, record.comment]
                 if matchAll:
                     matcher = lambda ps, f: len([1 for p in ps if re.search(p, f)]) == len(ps)
                 else:
