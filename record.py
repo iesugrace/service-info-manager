@@ -48,16 +48,16 @@ class Record(BasicRecord):
     # the second conv:     Record -->
     fields = {
         'id':      {'order': 1},    # id is engine dependent
-        'subject': {'required': True, 'order': 2},
+        'desc':    {'required': True, 'order': 2},
         'author':  {'required': True, 'order': 3},
         'time':    {'required': True, 'order': 4,
                     'conv': [strtosecond, isodatetime]},
-        'scene':   {'order': 5},
-        'people':  {'order': 6},
-        'tag':     {'order': 7},
-        'data':    {'order': 8},
-        'binary':  {'order': 9, 'conv': [(lambda s: s == 'true'),
-                         (lambda v: ['false', 'true'][bool(v)])]},
+        'host':    {'required': True, 'order': 5},
+        'protocol':{'required': True, 'order': 6},
+        'port':    {'required': True, 'order': 7},
+        'user':    {'order': 8},
+        'password':{'order': 9},
+        'comment': {'order': 10},
     }
 
     sep = ':'  # separator between key and value
@@ -66,7 +66,7 @@ class Record(BasicRecord):
         """ Class specific representation method
         Subclass shall redefine this method.
         """
-        keys   = ['Author', 'Time', 'Scene', 'People', 'Tag']
+        keys   = ['Author', 'Time', 'Desc', 'Host', 'Protocol', 'Port', 'User', 'Password']
         c      = lambda x: x
         cvtMap = zip(keys, [c, isodatetime] + [c] * 6)
         values = [c(getattr(self, k.lower())) for k, c in cvtMap]
@@ -78,14 +78,9 @@ class Record(BasicRecord):
             if v:
                 text += fmt % (k, v)
         id     = self.id if self.id else 'N/A'
-        text   = 'log %s\n%s' % (id, text[:-1])
-        text   = '%s\n\n%s' % (text, self.subject)
-        if self.binary:
-            data = "-->> Binary data <<--"
-        else:
-            data = self.data
-        if data:
-            text = '%s\n\n%s' % (text, data.rstrip('\n'))
+        text   = 'service %s\n%s' % (id, text[:-1])
+        if self.comment:
+            text = '%s\n\n%s' % (text, self.comment.rstrip('\n'))
         return text
 
     def save(self, oldRecord=None):
