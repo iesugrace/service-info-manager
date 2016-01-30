@@ -1,4 +1,4 @@
-A log program that can add, delete, edit, list and search entries, it syncs data with the server using git, all data that sent to the server are encrypted, plaintext data that is sensitive only exposed on the client side.
+A tool to manage computer service information, it stores the data in an XML file, supports adding, deleting, editing, listing and searching entries.
 
 See LICENSE for license agreement.
 

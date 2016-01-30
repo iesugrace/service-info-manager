@@ -1,20 +1,20 @@
 1. Copy the whole directory somewhere you like, and create a symbolic link in the PATH for the 'main' file.
-   $ ln -s /some/where/you/like/main ~/bin/log
+   $ ln -s /some/where/you/like/main ~/bin/svman
 
-2. Create a config file, save it to ~/.logrc, here is an example:
+2. Create a config file, save it to ~/.svmanrc, here is an example:
     # vim: filetype=python:
     #
     # These code is Python code.
     # Only variable assignment will be retained
     
-    # Where to store the log data
-    dataDir = '/home/joshua/.soogho9E_log_data'
-    
+    # Where to store the data
+    dataDir = '/home/joshua/.svman'
+
     # Author name
     authorName = 'Joshua Chen'
-    
+
     # Author email
     authorEmail = 'iesugrace@gmail.com'
 
 3. Check out the usage.
-   $ log --help
+   $ svman --help
