@@ -193,56 +193,34 @@ class Log:
     to the Record fields definition, or add more others.
     """
 
-    def lastScene(self, record=None):
-        """ Fetch the recently used scene from the history
-        """
-        if not record:
-            record = self.lastLog()
-        if record:
-            return record.scene
-        else:
-            return ''
-
-    def lastTag(self, record=None):
-        """ Fetch the recently used tag from the history
-        """
-        if not record:
-            record = self.lastLog()
-        if record:
-            return record.tag
-        else:
-            return ''
-
-    def makeRequests(self, *, record=None, time=None,
-                    scene=None, people=None, tag=None, **junk):
+    def makeRequests(self, *, record=None, time=None, host=None,
+            protocol=None, port=None, user=None, password=None, **junk):
         """ Create the necessary requests data for collecting
         information for a Record from the user interactively.
         """
         if record:      # a Record instance provided
-            time     =  record.time
-            scene    =  record.scene
-            people   =  record.people
-            tag      =  record.tag
+            time      =  record.time
+            host      =  record.host
+            protocol  =  record.protocol
+            port      =  record.port
+            user      =  record.user
+            password  =  record.password
         else:
             time      = time if time else timeutils.isodatetime()
-            people    = people if people else ''
-            recentLog = None
-            # take the recently used scene and
-            # tag from the most recent log.
-            if not scene:
-                lastLog = self.lastLog()
-                scene   = self.lastScene(lastLog)
-            if not tag:
-                if not lastLog:
-                    lastLog = self.lastLog()
-                tag = self.lastTag(lastLog)
+            host      =  host      if  host      else  ''
+            protocol  =  protocol  if  protocol  else  ''
+            port      =  port      if  port      else  ''
+            user      =  user      if  user      else  ''
+            password  =  password  if  password  else  ''
 
         requests = []
         # arguments: name, default, datatype, reader, desc
-        requests.append(applib.makeOneRequest('time',    time,    str, None, 'time'))
-        requests.append(applib.makeOneRequest('scene',   scene,   str, None, 'scene'))
-        requests.append(applib.makeOneRequest('people',  people,  str, None, 'people'))
-        requests.append(applib.makeOneRequest('tag',     tag,     str, None, 'tag'))
+        requests.append(applib.makeOneRequest('time',     time,     str, None, 'time'))
+        requests.append(applib.makeOneRequest('host',     host,     str, None, 'host'))
+        requests.append(applib.makeOneRequest('protocol', protocol, str, None, 'protocol'))
+        requests.append(applib.makeOneRequest('port',     port,     str, None, 'port'))
+        requests.append(applib.makeOneRequest('user',     user,     str, None, 'user'))
+        requests.append(applib.makeOneRequest('password', password, str, None, 'password'))
         return requests
 
     def collectLogInfo(self, *junk, **args):
@@ -251,44 +229,41 @@ class Log:
         be decoded using utf8, binary data that is
         not utf8 encoded, is not applicable.
         """
-        data     = args.pop('data')
-        subject  = args.pop('subject')
-        binary   = args.pop('binary')
+        comment = args.pop('comment')
+        desc    = args.pop('desc')
 
-        # read subject and data from editor
-        if binary:
-            iData =  b'\n# Binary data is provided, therefore only the first\n'
-            iData += b'# line will be used for subject, empty message aborts.\n'
-        elif subject:
-            iData = subject.encode()
-            if data:
-                iData += b'\n\n' + data
+        # read desc and comment from editor
+        if desc:
+            iData = desc.encode()
+            if comment:
+                iData += b'\n\n' + comment
         else:
             iData = b''
         oData    = editContent(iData).decode()
         msgLines = oData.split('\n\n')
-        subject  = msgLines.pop(0).strip()
-        if not binary:  # accept data from editor only for non-binary
-            data = '\n\n'.join(msgLines)
+        desc     = msgLines.pop(0).strip()
+        comment  = '\n\n'.join(msgLines)
 
-        # empty subject, abort
-        assert subject != '', "aborting due to empty subject"
+        # empty desc, abort
+        assert desc != '', "aborting due to empty desc"
 
         # read other info
         requests = self.makeRequests(**args)
         i        = interact.readMany(requests)
-        time     =  i['time']
-        scene    =  i['scene']
-        people   =  i['people']
-        tag      =  i['tag']
+        time     = i['time']
+        host     = i['host']
+        protocol = i['protocol']
+        port     = i['port']
+        user     = i['user']
+        password = i['password']
 
-        return dict(subject=subject, time=time, scene=scene,
-                      people=people, tag=tag, data=data, binary=binary)
+        return dict(desc=desc, time=time, host=host, protocol=protocol,
+                      port=port, user=user, password=password, comment=comment)
 
     def preActionOfDelete(self, record):
         """ Confirm before deleting
         """
-        msg = 'delete %s: %s? ' % (record.id, record.subject)
+        msg = 'delete %s: %s? ' % (record.id, record.desc)
         ans = interact.readstr(msg, default='N')
         return ans == 'y'
 
@@ -299,6 +274,6 @@ class Log:
         """ Convert data before editing
         """
         conv = Record.getConv('time', toRecord=False)
-        elements['time'] = conv(elements['time'])
-        elements['data'] = elements['data'].encode()
+        elements['time']    = conv(elements['time'])
+        elements['comment'] = elements['comment'].encode()
         return elements
