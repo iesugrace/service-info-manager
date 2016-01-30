@@ -130,9 +130,9 @@ class XmlStorage:
         paths      = []
         if not oldRecord:   # add new record
             record.id = XmlStorage.genId(timestamp)
-            commitMsg = 'Add log\n\n%s' % record.id
+            commitMsg = 'Add record\n\n%s' % record.id
         else:
-            commitMsg = 'Change log\n\n%s' % record.id
+            commitMsg = 'Change record\n\n%s' % record.id
             if record != oldRecord:
                 path = XmlStorage.idToPath(oldRecord.id)
                 paths.append(path)
