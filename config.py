@@ -7,7 +7,7 @@ class Config:
     and the method 'validate' to suite the needs.
     """
 
-    fileName = '.logrc'
+    fileName = '.svmanrc'
 
     def __init__(self, path=None):
         if not path:
