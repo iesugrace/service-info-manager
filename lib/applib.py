@@ -5,8 +5,10 @@ import base64
 import string
 import re
 import time
+from record import Record
 
 class InvalidTimeException(Exception): pass
+class InvalidReException(Exception): pass
 class InvalidCmdException(Exception): pass
 class NotTerminalException(Exception): pass
 class NotSupportedException(Exception): pass
@@ -183,12 +185,12 @@ def parsePattern(pstr):
     punct = '[' + re.escape(string.punctuation) + ']'
     m = re.search(punct, pstr)
     if not m:           # no mark
-        return None
+        raise InvalidReException("invalid pattern: %s" % regexp)
     mark = m.group(0)
     sIdx = pstr.index(mark)
     eIdx = pstr.rindex(mark)
     if sIdx == eIdx:    # only one mark
-        return None
+        raise InvalidReException("invalid pattern: %s" % regexp)
     field   = pstr[:sIdx]
     pattern = pstr[(sIdx+1):eIdx]
     flagStr = pstr[(eIdx+1):]
@@ -196,9 +198,12 @@ def parsePattern(pstr):
     for f in flagStr:
         v = flags.get(f)
         if not v:       # unsupported flag
-            return None
+            raise InvalidReException("invalid pattern: %s" % regexp)
         flagVal |= v
-    return (pattern, flagVal, field)
+    lField = field.lower()
+    if lField and lField not in Record.fields:
+        raise InvalidReException("no such field: %s" % field)
+    return (pattern, flagVal, lField)
 
 
 def parseTime(timeStr):

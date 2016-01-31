@@ -53,7 +53,6 @@ class App:
                     assert len(args) > 0, "need argument for -S option"
                     regexp = args.pop(0)
                 patter = applib.parsePattern(regexp)
-                assert patter, ("invalid pattern: %s" % regexp)
                 regexps.append(patter)
             elif arg == '--all-match':  # affects the RE evaluation
                 allMatch = True
@@ -509,6 +508,7 @@ if __name__ == '__main__':
         pass
     except (AssertionError,
             applib.InvalidTimeException,
+            applib.InvalidReException,
             applib.InvalidCmdException,
             applib.NotTerminalException) as e:
         print(e, file=sys.stderr)
