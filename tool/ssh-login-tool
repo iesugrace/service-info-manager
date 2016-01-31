@@ -6,14 +6,25 @@
 # service manager, and try to login.
 
 login() {
-    text=$(svman list -S "$1")
+    cmd="svman list"
+    for x in "$@"
+    do
+        # the argument is already an RE
+        if test "${x/\//}" != "$x"; then
+            cmd+=" -S '$x'"
+        else
+            cmd+=" -S '/$x/i'"
+        fi
+    done
+    cmd+=" -S protocol/ssh/i --all-match"
+    text=$(eval $cmd)
     count=$(grep -c service <<< "$text")
     if test "$count" -eq 0; then
         echo "no match" >&2
         exit
     elif test "$count" -ne 1; then
         prompt=$(echo "$text" | grep -e service -e Desc -e Host -e Protocol -e Port \
-                    sed '/^Port/a\\')
+                    | sed '/^Port/a\\')
         echo "multiple match:"
         echo "$prompt"
         exit
@@ -33,12 +44,12 @@ login() {
 }
 
 help() {
-    echo "Usage: $(basename $0) keyword"
+    echo "Usage: $(basename $0) <keyword>..."
 }
 
-if test $# -ne 1; then
+if test $# -lt 1; then
     help >&2
     exit 1
 fi
 
-login "$1"
+login "$@"
