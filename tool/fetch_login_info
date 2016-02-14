@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+# Author: Joshua Chen
+# Date: 2016-02-14
+# Location: Zhuhai
+# Desc: Fetch the login information from
+# the service manager, write to stdout,
+# one element per line.
+
+import sys
+from subprocess import Popen, PIPE, getstatusoutput
+
+def get_status_text_output(cmd):
+    """ Run the cmd, return the output as a list of lines
+    as well as the stat of the cmd (True or False), content
+    of the out will be decoded.
+    """
+    stat, output = getstatusoutput(cmd)
+    if stat == 0:
+        output = output.split('\n') if output else []
+        res    = (True, output)
+    else:
+        res    = (False, [])
+    return res
+
+def multimatch(x, patterns):
+    return len([1 for p in patterns if p in x]) > 0
+
+def getValue(lines, keyword):
+    import re
+    repl = '^%s: *' % keyword
+    line = [x for x in lines if re.findall(repl, x)][0]
+    val  = re.sub(repl, '', line)
+    return val
+
+cmd = "svman list"
+for x in sys.argv[1:]:
+    # the argument is already an RE
+    if x.startswith('/'):
+        cmd += " -S '$x'"
+    else:
+        cmd += " -S '/%s/i'" % x
+
+cmd += " -S protocol/ssh/i --all-match"
+
+stat, text = get_status_text_output(cmd)
+if not stat:
+    print('error', file=sys.stderr)
+    exit(1)
+
+count = len([x for x in text if 'service' in x])
+if not count:
+    print("no match", file=sys.stderr)
+    exit(1)
+elif count != 1:
+    patterns = ['service', 'Desc', 'Host', 'Protocol', 'Port']
+    lines    = [x for x in text if multimatch(x, patterns)]
+    for num, line in enumerate(lines):
+        if line.startswith('Port'):
+            portLoc = num
+            break
+    lines.insert(portLoc + 1, '')
+    msg = '\n'.join(lines)
+    print("multiple match:")
+    print(msg)
+    exit(1)
+
+proto = getValue(text, 'Protocol')
+if proto != "ssh":
+    print("protocol %s not supported" % proto, file=sys.stderr)
+    exit(1)
+
+host     = getValue(text, 'Host')
+port     = getValue(text, 'Port')
+user     = getValue(text, 'User')
+password = getValue(text, 'Password')
+
+print(host, port, user, password, sep='\n')
