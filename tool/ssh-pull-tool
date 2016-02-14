@@ -1,0 +1,43 @@
+#!/bin/bash
+# Author: Joshua Chen
+# Date: 2016-02-14
+# Location: Zhuhai
+# Desc: Fetch the information from the service
+# manager, and try to pull file from the server. 
+
+pull() {
+    unset ARGS
+    i=1
+    for a in "$@"
+    do
+        ARGS[$i]=$a
+        i=$((i + 1))
+    done
+    pos1=${#ARGS[@]}
+    pos2=$((pos1 - 1))
+    dst=${ARGS[$pos1]}
+    src=${ARGS[$pos2]}
+    unset ARGS[$pos1]
+    unset ARGS[$pos2]
+
+    cmd='fetch_login_info'
+    lines=$($cmd "${ARGS[@]}")
+    host=$(sed -n 1p <<< "$lines")
+    port=$(sed -n 2p <<< "$lines")
+    user=$(sed -n 3p <<< "$lines")
+    password=$(sed -n 4p <<< "$lines")
+
+    # login
+    r pull -h "$host" -P "$port" -u "$user" -p "$password" "$src" "$dst"
+}
+
+help() {
+    echo "Usage: $(basename $0) <keyword>... SRC DST"
+}
+
+if test $# -lt 3; then
+    help >&2
+    exit 1
+fi
+
+pull "$@"
