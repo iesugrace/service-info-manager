@@ -8,6 +8,9 @@
 login() {
     cmd='fetch_login_info'
     lines=$($cmd "$@")
+    if test -z "$lines";then
+        return
+    fi
     host=$(sed -n 1p <<< "$lines")
     port=$(sed -n 2p <<< "$lines")
     user=$(sed -n 3p <<< "$lines")

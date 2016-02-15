@@ -1,11 +1,11 @@
 #!/bin/bash
 # Author: Joshua Chen
-# Date: 2016-02-14
-# Location: Zhuhai
+# Date: 2016-02-15
+# Location: Shenzhen
 # Desc: Fetch the information from the service
-# manager, and try to pull file from the server. 
+# manager, and try to push file to the server.
 
-pull() {
+pushIt() {
     unset ARGS
     i=1
     for a in "$@"
@@ -31,7 +31,7 @@ pull() {
     password=$(sed -n 4p <<< "$lines")
 
     # login
-    r pull -h "$host" -P "$port" -u "$user" -p "$password" "$src" "$dst"
+    r push -h "$host" -P "$port" -u "$user" -p "$password" "$src" "$dst"
 }
 
 help() {
@@ -43,4 +43,4 @@ if test $# -lt 3; then
     exit 1
 fi
 
-pull "$@"
+pushIt "$@"
