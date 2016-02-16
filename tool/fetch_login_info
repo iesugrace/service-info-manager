@@ -54,12 +54,12 @@ if not count:
 elif count != 1:
     patterns = ['service', 'Desc', 'Host', 'Protocol', 'Port']
     lines    = [x for x in text if multimatch(x, patterns)]
-    for num, line in enumerate(lines):
+    newLines = []
+    for line in lines:
+        newLines.append(line)
         if line.startswith('Port'):
-            portLoc = num
-            break
-    lines.insert(portLoc + 1, '')
-    msg = '\n'.join(lines)
+            newLines.append('')
+    msg = '\n'.join(newLines)
     print("multiple match:")
     print(msg)
     exit(1)
