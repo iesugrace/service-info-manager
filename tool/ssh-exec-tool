@@ -3,9 +3,9 @@
 # Date: 2016-02-15
 # Location: Shenzhen
 # Desc: Fetch the information from the service
-# manager, and try to push file to the server.
+# manager, and try to execute command on the server.
 
-pushIt() {
+execIt() {
     unset ARGS
     i=1
     for a in "$@"
@@ -13,12 +13,16 @@ pushIt() {
         ARGS[$i]=$a
         i=$((i + 1))
     done
-    pos1=${#ARGS[@]}
-    pos2=$((pos1 - 1))
-    dst=${ARGS[$pos1]}
-    src=${ARGS[$pos2]}
-    unset ARGS[$pos1]
-    unset ARGS[$pos2]
+    pos=${#ARGS[@]}
+    target=${ARGS[$pos]}
+    unset ARGS[$pos]
+    pos=${#ARGS[@]}
+    opt=${ARGS[$pos]}
+    if test "$opt" = "-s"; then
+        unset ARGS[$pos]
+    else
+        opt=
+    fi
 
     cmd='fetch_login_info'
     lines=$($cmd "${ARGS[@]}")
@@ -30,17 +34,17 @@ pushIt() {
     user=$(sed -n 3p <<< "$lines")
     password=$(sed -n 4p <<< "$lines")
 
-    # push
-    r push -h "$host" -P "$port" -u "$user" -p "$password" "$src" "$dst"
+    # execute
+    r exec -h "$host" -P "$port" -u "$user" -p "$password" $opt "$target"
 }
 
 help() {
-    echo "Usage: $(basename $0) <keyword>... SRC DST"
+    echo "Usage: $(basename $0) <keyword>... <-s SCRIPT|COMMANDS>"
 }
 
-if test $# -lt 3; then
+if test $# -lt 2; then
     help >&2
     exit 1
 fi
 
-pushIt "$@"
+execIt "$@"

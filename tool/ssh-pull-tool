@@ -30,7 +30,7 @@ pull() {
     user=$(sed -n 3p <<< "$lines")
     password=$(sed -n 4p <<< "$lines")
 
-    # login
+    # pull
     r pull -h "$host" -P "$port" -u "$user" -p "$password" "$src" "$dst"
 }
 
